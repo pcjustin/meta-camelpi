@@ -60,6 +60,11 @@ URI: https://git.yoctoproject.org/meta-yocto
 URI: https://git.yoctoproject.org/meta-raspberrypi
     branch: master
     revision: HEAD
+
+URI: https://git.openembedded.org/meta-openembedded
+    branch: master
+    revision: HEAD
+    layers: meta-oe, meta-python, meta-multimedia
 ```
 
 ## Quick Start
@@ -69,6 +74,7 @@ URI: https://git.yoctoproject.org/meta-raspberrypi
    git clone https://git.openembedded.org/openembedded-core
    git clone https://git.yoctoproject.org/meta-yocto
    git clone https://git.yoctoproject.org/meta-raspberrypi
+   git clone https://git.openembedded.org/meta-openembedded
    git clone <meta-aurispi-repository>
    ```
 
@@ -77,7 +83,11 @@ URI: https://git.yoctoproject.org/meta-raspberrypi
    source openembedded-core/oe-init-build-env auris-build
    ```
 
-3. Add this layer to `conf/bblayers.conf` and the dependencies above
+3. Add layers to `conf/bblayers.conf`:
+   - meta-aurispi
+   - meta-openembedded/meta-oe
+   - meta-openembedded/meta-python
+   - meta-openembedded/meta-multimedia
 
 4. Configure `conf/local.conf`:
    ```
