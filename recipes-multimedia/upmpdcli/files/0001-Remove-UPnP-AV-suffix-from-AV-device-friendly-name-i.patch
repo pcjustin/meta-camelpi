@@ -1,0 +1,29 @@
+From dd53e8ee7202d4b952b4fdca0fafeafaeb23e2c1 Mon Sep 17 00:00:00 2001
+From: Camel <pcjustin@icloud.com>
+Date: Sat, 13 Dec 2025 22:15:09 +0800
+Subject: [PATCH] Remove UPnP/AV suffix from AV device friendly name
+ initialization.
+
+Upstream-Status: Inappropriate [configuration]
+
+Signed-off-by: Camel <pcjustin@icloud.com>
+---
+ src/upmpd.cxx | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/upmpd.cxx b/src/upmpd.cxx
+index fea7f1d..e2477ea 100644
+--- a/src/upmpd.cxx
++++ b/src/upmpd.cxx
+@@ -223,7 +223,7 @@ UpMpd::UpMpd(const string& hwaddr, const string& friendlyname,
+         " " + LibUPnP::versionString() + " " + "mpd " + mpdversion;
+     
+     if (0 == (opts.options & upmpdNoAV)) {
+-        std::string avfname{friendlyname + "-UPnP/AV"};
++        std::string avfname{friendlyname};
+         if (getOptionValue("avfriendlyname", avfname, avfname)) {
+             avfname = fnameSetup(avfname);
+         }
+-- 
+2.50.1 (Apple Git-155)
+

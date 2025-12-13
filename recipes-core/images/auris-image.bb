@@ -9,4 +9,5 @@ IMAGE_INSTALL:append = " \
     cpu-performance \
     mpd \
     mpd-auris \
+    upmpdcli \
 "

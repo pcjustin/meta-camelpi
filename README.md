@@ -9,13 +9,16 @@ Auris is a dedicated music platform designed to deliver pristine high-resolution
 ## Features
 
 - **High-Resolution Audio Support**: Native playback of Hi-Res audio formats through USB DAC
+- **UPnP Renderer**: Act as UPnP/DLNA audio renderer to receive audio streams from UPnP control points
 - **Multiple Audio Sources**:
   - SAMBA/CIFS network shares
   - USB storage devices
   - UPnP/DLNA media servers
+- **Bit-Perfect Audio**: Direct hardware access with no sample rate conversion
+- **CPU Isolation**: Dedicated CPU core for audio processing with real-time scheduling
 - **Web-Based Control**: Intuitive web interface for music library management and playback control
 - **Optimized for Audio**: Minimal Linux image focused on audio performance
-- **Raspberry Pi Ready**: Built and optimized for Raspberry Pi hardware
+- **Raspberry Pi Ready**: Built and optimized for Raspberry Pi 5 hardware
 
 ## Image
 
