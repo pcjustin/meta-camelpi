@@ -31,38 +31,7 @@ The layer provides `auris-image`, a custom Linux image based on `core-image-mini
 
 ## Architecture
 
-```
-┌──────────────────────────────────────────────────────────────┐
-│              System Architecture                             │
-├──────────────────────────────────────────────────────────────┤
-│  CPU Core Distribution:                                      │
-│  ├─ CPU 0-2: General System & Networking                    │
-│  └─ CPU 3: Audio Processing (Isolated, Real-time)           │
-│                                                              │
-│  ┌────────────────────────────────────────────────────────┐ │
-│  │  Audio Processing Services                           │ │
-│  │  ├─ MPD (Priority 80 - FIFO)                         │ │
-│  │  ├─ Shairport Sync (AirPlay Receiver)                │ │
-│  │  └─ upmpdcli (Priority 70 - FIFO)                    │ │
-│  └────────────────────────────────────────────────────────┘ │
-│                          ↓                                   │
-│  ┌────────────────────────────────────────────────────────┐ │
-│  │     Audio Output Interface                            │ │
-│  │     ├─ ALSA PCM Configuration                        │ │
-│  │     └─ USB DAC Device Driver                         │ │
-│  └────────────────────────────────────────────────────────┘ │
-│                          ↓                                   │
-│  ┌────────────────────────────────────────────────────────┐ │
-│  │     USB DAC (High-Resolution Audio Output)            │ │
-│  └────────────────────────────────────────────────────────┘ │
-│                                                              │
-│  Audio Sources:                                              │
-│  ├─ AirPlay (from iOS/macOS) → Shairport Sync              │
-│  ├─ UPnP/DLNA Servers → upmpdcli → MPD                     │
-│  ├─ Local Storage/SAMBA → MPD                              │
-│  └─ Web Interface Control (from CPUs 0-2)                   │
-└──────────────────────────────────────────────────────────────┘
-```
+![System Architecture](docs/architecture/system-architecture.jpg)
 
 ### Automatic Audio Source Switching
 
