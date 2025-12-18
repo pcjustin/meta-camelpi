@@ -33,6 +33,8 @@ The layer provides `auris-image`, a custom Linux image based on `core-image-mini
 
 ![System Architecture](docs/architecture/system-architecture.jpg)
 
+For a detailed explanation of the architecture and design principles, see [meta-aurispi: HiFi Music Streaming Platform](https://pcjustin.com/2025/12/13/2025-12-13-meta-aurispi-hifi-music-streaming-platform/)
+
 ### Automatic Audio Source Switching
 
 The platform automatically switches between audio sources:
