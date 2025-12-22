@@ -1,3 +1,5 @@
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
-SRC_URI:append = " file://usb-audio.cfg"
+SRC_URI:append = " file://usb-audio.cfg \
+                   file://initramfs.cfg \
+"
