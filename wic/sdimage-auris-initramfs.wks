@@ -1,0 +1,5 @@
+# short-description: Create Auris Pi RAM boot SD card image
+# long-description: Creates a partitioned SD card image with initramfs for Auris Pi.
+# Boot from RAM with kernel and initramfs in the boot partition.
+
+part /boot --source bootimg-partition --ondisk mmcblk0 --fstype=vfat --label boot --active --align 4096 --size 512 --extra-space 0

@@ -1,16 +1,6 @@
 require recipes-core/images/core-image-minimal.bb
 
-SUMMARY = "Auris audio image"
+SUMMARY = "Auris audio WIC image (rootfs not used - initramfs boot only)"
 
-IMAGE_INSTALL:append = " \
-    alsa-lib \
-    alsa-utils \
-    alsa-config \
-    cpu-performance \
-    mpd \
-    mpd-auris \
-    upmpdcli \
-    shairport-sync \
-    avahi-daemon \
-    libconfig \
-"
+# This image is used only to generate the WIC file structure
+# The actual rootfs comes from auris-initramfs-image
