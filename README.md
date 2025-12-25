@@ -9,6 +9,10 @@ Auris is a dedicated music platform designed to deliver pristine high-resolution
 ## Features
 
 - **High-Resolution Audio Support**: Native playback of Hi-Res audio formats through USB DAC
+- **RAM Boot System**: Entire OS runs from RAM (initramfs), no rootfs partition needed
+  - Minimal SD card writes for extended lifespan
+  - Fast boot and shutdown
+  - Optimized for audio-focused workloads
 - **AirPlay Support**: Stream audio from iOS, macOS, and iTunes via Shairport Sync with automatic switching
 - **UPnP Renderer**: Act as UPnP/DLNA audio renderer to receive audio streams from UPnP control points
 - **Multiple Audio Sources**:
@@ -28,6 +32,14 @@ Auris is a dedicated music platform designed to deliver pristine high-resolution
 ## Image
 
 The layer provides `auris-image`, a custom Linux image based on `core-image-minimal` with audio streaming capabilities.
+
+### Image Architecture
+
+- **RAM Boot System**: Entire OS runs from RAM via initramfs (mounted on `/dev/ram0`)
+- **Single Boot Partition**: No separate rootfs partition, minimizes SD card usage
+- **Kernel with Embedded Initramfs**: Kernel built with embedded auris-initramfs-image
+- **WIC Image Format**: Pre-partitioned `.wic.bz2` format for easy SD card deployment
+- **Audio-Optimized**: Minimal rootfs focused on audio performance
 
 ## Architecture
 
@@ -189,6 +201,42 @@ Stream audio directly from your iOS, macOS, or iTunes device:
 
 ## Development
 
+### Initramfs RAM Boot
+
+The system boots from initramfs (initial RAM filesystem) for optimized audio performance:
+
+#### Configuration
+- **Initramfs Image**: `auris-initramfs-image` - custom minimal rootfs with audio packages
+- **Kernel Bundling**: Initramfs is embedded directly in kernel via `INITRAMFS_IMAGE_BUNDLE = "1"`
+- **Root Filesystem**: Mounted as `/dev/ram0` at boot time
+- **Kernel Parameters**: `root=/dev/ram0` in cmdline.txt
+- **Configuration Files**:
+  - `conf/layer.conf` - Initramfs image and bundling settings
+  - `wic/sdimage-auris-initramfs.wks` - Single partition WIC template
+  - `recipes-kernel/linux/linux-raspberrypi_%.bbappend` - Kernel config files
+
+#### Benefits
+- Reduced SD card wear (all writes to RAM)
+- Fast boot/shutdown cycles
+- Consistent audio performance without I/O interference
+
+### USB DAC Audio Configuration
+
+#### Hardware Setup
+- USB DAC automatically detected as primary audio device
+- ALSA interface available at `/proc/asound`
+- Bluetooth and WiFi disabled to minimize interference
+
+#### Configuration
+- **Device Tree Overlays**:
+  - `dtoverlay=vc4-kms-v3d,noaudio` - HDMI output with audio disabled
+  - `dtoverlay=disable-bt-pi5` - Disable Bluetooth
+  - `dtoverlay=disable-wifi-pi5` - Disable WiFi
+  - Located in: `recipes-bsp/bootfiles/rpi-config_git.bbappend`
+- **Kernel Audio Support**:
+  - `CONFIG_SND_USB_AUDIO=m` - USB Audio driver (compiled as module)
+  - Located in: `recipes-kernel/linux/files/usb-audio.cfg`
+
 ### System Performance Tuning
 
 The Auris platform implements several performance optimizations:
@@ -247,6 +295,7 @@ For issues and feature requests, please use the issue tracker.
 
 ## Roadmap
 
+- [x] RAM boot support (initramfs-based system)
 - [ ] Spotify Connect integration
 - [ ] Tidal/Qobuz streaming support
 - [ ] Multi-room audio synchronization
@@ -256,7 +305,6 @@ For issues and feature requests, please use the issue tracker.
 - [ ] Gapless playback
 - [ ] Playlist management
 - [ ] Album art display
-- [ ] RAM boot support
 
 ## Acknowledgments
 
