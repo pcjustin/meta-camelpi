@@ -16,4 +16,5 @@ IMAGE_INSTALL:append = " \
     shairport-sync \
     avahi-daemon \
     libconfig \
+    scx \
 "
