@@ -8,6 +8,8 @@ IMAGE_INSTALL:append = " \
     alsa-utils \
     alsa-config \
     cpu-performance \
+    irq-affinity \
+    usb-tuning \
     mpd \
     mpd-auris \
     upmpdcli \

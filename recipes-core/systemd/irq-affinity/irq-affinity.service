@@ -1,0 +1,14 @@
+[Unit]
+Description=Configure IRQ affinity to exclude isolated CPU core
+After=sysinit.target
+Before=mpd-auris.service upmpdcli.service shairport-sync.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/irq-affinity.sh
+RemainAfterExit=yes
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -8,6 +8,9 @@ Type=simple
 User=shairport-sync
 Group=audio
 
+# Restrict to CPU cores 0-2 (not using isolated CPU 3)
+CPUAffinity=0-2
+
 ExecStart=/usr/bin/shairport-sync -c /etc/shairport-sync.conf
 
 Restart=on-failure
