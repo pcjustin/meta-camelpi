@@ -11,6 +11,7 @@ S = "${UNPACKDIR}"
 inherit systemd allarch
 
 DEPENDS = "mpd"
+RDEPENDS:${PN} = "mpd"
 
 SYSTEMD_SERVICE:${PN} = "mpd-auris.service"
 SYSTEMD_AUTO_ENABLE = "enable"
@@ -24,7 +25,3 @@ do_install() {
 }
 
 FILES:${PN} = "${sysconfdir}/mpd-auris.conf ${systemd_system_unitdir}/mpd-auris.service"
-
-pkg_postinst:${PN}() {
-    systemctl mask mpd.service mpd.socket 2>/dev/null || true
-}

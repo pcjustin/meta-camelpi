@@ -10,11 +10,12 @@ PV = "1.0.19"
 
 SRC_URI = "git://github.com/sched-ext/scx.git;protocol=https;branch=main \
     file://0001-fix-mcpu-v3-for-arm64.patch \
+    file://scx-bpfland.service \
 "
 
 S = "${UNPACKDIR}/scx-1.0.19"
 
-inherit cargo cargo-update-recipe-crates ptest-cargo pkgconfig
+inherit cargo cargo-update-recipe-crates ptest-cargo pkgconfig systemd
 
 DEPENDS = " \
     libbpf \
@@ -35,5 +36,21 @@ INSANE_SKIP:${PN} = "buildpaths"
 do_compile:prepend() {
     export BINDGEN_EXTRA_CLANG_ARGS="--sysroot=${STAGING_DIR_TARGET} -target ${TARGET_SYS} -D__LP64__"
 }
+
+do_install() {
+    install -d ${D}${bindir}
+    install -m 755 ${B}/target/aarch64-oe-linux-gnu/release/scx_bpfland ${D}${bindir}/
+
+    # Install systemd service file
+    install -d ${D}${systemd_system_unitdir}
+    install -m 644 ${UNPACKDIR}/scx-bpfland.service ${D}${systemd_system_unitdir}/
+}
+
+# Include scx_bpfland binary and systemd service
+FILES:${PN} = "${bindir}/scx_bpfland ${systemd_system_unitdir}/scx-bpfland.service"
+
+# Enable service on boot
+SYSTEMD_AUTO_ENABLE = "enable"
+SYSTEMD_SERVICE:${PN} = "scx-bpfland.service"
 
 require ${BPN}-crates.inc

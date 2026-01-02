@@ -21,10 +21,10 @@ Auris is a dedicated music platform designed to deliver pristine high-resolution
   - USB storage devices
   - UPnP/DLNA media servers
 - **Bit-Perfect Audio**: Direct hardware access with no sample rate conversion
-- **CPU Isolation**: Dedicated CPU core (CPU 3) for audio processing with real-time scheduling
-  - MPD (Music Player Daemon): FIFO priority 80
-  - upmpdcli (UPnP Renderer): FIFO priority 70
-- **Automatic Audio Source Switching**: Seamlessly switches between audio sources when AirPlay connects
+- **Real-Time Audio Scheduling**: Dynamic CPU scheduling with FIFO priorities
+  - mpd-auris (Backend): FIFO priority 80 (ALSA audio control - critical path)
+  - upmpdcli (UPnP Renderer): FIFO priority 75 (primary playback - depends on mpd)
+  - Shairport Sync (AirPlay): FIFO priority 70 (independent ALSA access)
 - **Web-Based Control**: Intuitive web interface for music library management and playback control
 - **Optimized for Audio**: Minimal Linux image focused on audio performance
 - **Raspberry Pi Ready**: Built and optimized for Raspberry Pi 5 hardware
@@ -43,18 +43,75 @@ The layer provides `auris-image`, a custom Linux image based on `core-image-mini
 
 ## Architecture
 
-![System Architecture](docs/architecture/system-architecture.jpg)
+### System Architecture Diagram
+
+```
+┌────────────────────────────────────────────────────────────┐
+│                      Network Sources                       │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
+│  │ UPnP Server  │  │  AirPlay     │  │ SAMBA/USB    │     │
+│  │  (Primary)   │  │              │  │  (Local)     │     │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘     │
+└─────────┼──────────────────┼──────────────────┼────────────┘
+          │                  │                  │
+    ┌─────▼─────────────┐    │          ┌───────▼────┐
+    │ upmpdcli (UPnP)   │    │          │ File/USB   │
+    │ FIFO: 75          │    │          │ Browser    │
+    │ (Primary playback)│    │          └────────────┘
+    └────────┬──────────┘    │
+             │                │     ┌──────────────────┐
+             │                │     │ Shairport-sync   │
+             │                └────▶│ FIFO: 70         │
+             │                      │ (AirPlay)        │
+             │                      │ Direct ALSA      │
+    ┌────────▼─────────────────┐    └────────┬─────────┘
+    │   mpd-auris (Backend)    │             │
+    │   FIFO: 80 (Critical)    │             │
+    │   ALSA Control & Output  │             │
+    └────────┬─────────────────┘             │
+             │                                │
+    ┌────────┴────────────────────────────────┴──┐
+    │            USB DAC Audio Output             │
+    │         (Bit-Perfect, No Resampling)        │
+    └──────────────────────────────────────────────┘
+
+CPU Scheduler (scx_bpfland):
+    Primary Domain: CPU 3 (Audio)
+    Overflow Domain: CPU 0-2 (System Services)
+
+    FIFO Priority Hierarchy:
+    80: mpd-auris ────────── Critical ALSA Control
+    75: upmpdcli ─────────── Depends on mpd-auris
+    70: Shairport-sync ───── Independent ALSA
+    Normal: Other Services
+
+Interrupt Handling: CPU 0-2 (irqaffinity=0-2)
+```
 
 For a detailed explanation of the architecture and design principles, see [meta-aurispi: HiFi Music Streaming Platform](https://pcjustin.com/2025/12/13/2025-12-13-meta-aurispi-hifi-music-streaming-platform/)
 
-### Automatic Audio Source Switching
+### Audio Signal Flow
 
-The platform automatically switches between audio sources:
-- When AirPlay connection is detected, Shairport Sync automatically stops MPD and upmpdcli
-- When AirPlay disconnects, MPD and upmpdcli automatically resume
-- This ensures seamless audio playback without manual intervention
+**UPnP Playback (Primary):**
+```
+UPnP Server → upmpdcli (control) → mpd-auris (ALSA) → USB DAC
+```
 
-The CPU core 3 is isolated for audio processing with real-time scheduling to ensure consistent, low-latency audio streaming for bit-perfect playback.
+**AirPlay Playback (Independent):**
+```
+AirPlay Source → Shairport-sync (direct) → USB DAC
+```
+
+Both use the same USB DAC but independent paths to avoid conflicts.
+
+### Real-Time Scheduling Strategy
+
+- **mpd-auris** (FIFO 80): Highest priority, controls critical ALSA interface
+- **upmpdcli** (FIFO 75): Secondary priority, depends on mpd-auris for audio output
+- **Shairport-sync** (FIFO 70): Independent ALSA access, lower priority
+- **System Services**: Normal priority, dynamically scheduled by scx_bpfland
+
+Priority inversion is avoided because mpd-auris (critical path) has highest priority among audio applications.
 
 ## Dependencies
 
@@ -241,18 +298,49 @@ The system boots from initramfs (initial RAM filesystem) for optimized audio per
 
 The Auris platform implements several performance optimizations:
 
-#### CPU Isolation
-- **Kernel Parameter**: `isolcpus=3 nohz_full=3 rcu_nocbs=3`
-  - Isolates CPU 3 from system scheduler
-  - Disables kernel timer interrupts on CPU 3
-  - Redirects RCU callbacks to other CPUs
+#### System Startup Order
+The services are carefully configured to avoid circular dependencies:
+
+```
+Boot → network-online → scx-bpfland → upmpdcli → mpd-auris
+                                    ↓
+                            shairport-sync
+```
+
+**Service Dependencies:**
+- **scx-bpfland**: Starts after `network-online.target` (not `multi-user.target`)
+  - Provides dynamic CPU scheduling via BPF
+  - Must start early to manage system load
+- **mpd-auris**: Started as a dependency of `upmpdcli`
+  - FIFO priority 80 (critical audio control)
+  - Configured with `WantedBy=upmpdcli.service`
+  - Depends on `scx-bpfland.service`
+- **upmpdcli**: Starts with `multi-user.target`
+  - Automatically pulls in `mpd-auris` via `Wants=mpd-auris.service`
+  - FIFO priority 75 (primary playback)
+  - Depends on `mpd-auris.service`
+
+This ordering prevents the circular dependency that would occur if both services were directly tied to `multi-user.target`.
+
+#### CPU Isolation & Scheduling
+- **sched_ext Scheduler (scx_bpfland)**:
+  - Dynamic BPF-based scheduler for intelligent task distribution
+  - Primary domain: CPU 3 (--primary-domain 0x8)
+  - CPU 3 prioritized for audio applications (mpd-auris, upmpdcli, shairport-sync)
+  - System services dynamically scheduled by scx_bpfland
+  - Automatically balances load: high-priority audio tasks on CPU 3, others overflow to CPUs 0-2
+  - Located in: `recipes-kernel/scx/files/scx-bpfland.service`
+- **Interrupt Affinity**: `irqaffinity=0-2`
+  - Keeps interrupts on CPUs 0-2
+  - Protects CPU 3 from interrupt latency
   - Located in: `recipes-bsp/bootfiles/rpi-cmdline.bbappend`
 
 #### Real-Time Process Scheduling
-- **MPD**: `chrt -f 80` (FIFO priority 80) - Music Player Daemon for local playback
-- **Shairport Sync**: AirPlay audio receiver (standard priority)
-- **upmpdcli**: `chrt -f 70` (FIFO priority 70) - UPnP/DLNA protocol handler
-- Process CPU affinity via `taskset -c 3` - MPD and upmpdcli bound to isolated CPU core 3
+- **mpd-auris**: FIFO priority 80 - Music Player Daemon (critical ALSA control point)
+- **upmpdcli**: FIFO priority 75 - UPnP/DLNA renderer (primary playback method, depends on mpd)
+- **Shairport Sync**: FIFO priority 70 - AirPlay audio receiver (independent ALSA access)
+- CPU scheduling: Dynamically managed by scx_bpfland based on FIFO priorities and system load
+- Priority inversion prevention: Critical path (mpd-auris) has highest priority
 
 #### CPU Governor
 - Set to "performance" to minimize frequency scaling latency

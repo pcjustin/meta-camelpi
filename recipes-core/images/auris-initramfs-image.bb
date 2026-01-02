@@ -10,7 +10,6 @@ IMAGE_INSTALL:append = " \
     cpu-performance \
     irq-affinity \
     usb-tuning \
-    mpd \
     mpd-auris \
     upmpdcli \
     shairport-sync \

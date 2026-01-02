@@ -1,14 +1,17 @@
 [Unit]
-Description=Music Player Daemon (Auris - CPU 3 isolated)
-After=network.target sound.target
+Description=Music Player Daemon (Auris - scx_bpfland scheduled)
+After=network.target sound.target scx-bpfland.service
 
 [Service]
 Type=notify
 User=root
 Group=root
 
-ExecStartPre=/bin/mkdir -p /root/.mpd/playlists /var/log
-ExecStart=/usr/bin/taskset -c 3 /usr/bin/mpd --systemd /etc/mpd-auris.conf
+CPUSchedulingPolicy=fifo
+CPUSchedulingPriority=80
+
+ExecStartPre=/bin/mkdir -p /root/Music /root/.mpd/playlists /var/log
+ExecStart=/usr/bin/mpd --systemd /etc/mpd-auris.conf
 
 Restart=on-failure
 RestartSec=5
@@ -17,4 +20,4 @@ StandardOutput=journal
 StandardError=journal
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=upmpdcli.service

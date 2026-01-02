@@ -1,0 +1,16 @@
+[Unit]
+Description=sched_ext bpfland scheduler
+Documentation=https://github.com/sched-ext/scx
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/scx_bpfland --primary-domain 0x8
+Restart=on-failure
+RestartSec=5s
+
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

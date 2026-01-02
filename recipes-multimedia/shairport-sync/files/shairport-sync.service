@@ -1,6 +1,6 @@
 [Unit]
 Description=Shairport Sync AirPlay Audio Receiver
-After=sound.target network.target avahi-daemon.service
+After=sound.target network.target avahi-daemon.service scx-bpfland.service
 Requires=avahi-daemon.service
 
 [Service]
@@ -8,8 +8,8 @@ Type=simple
 User=shairport-sync
 Group=audio
 
-# Restrict to CPU cores 0-2 (not using isolated CPU 3)
-CPUAffinity=0-2
+CPUSchedulingPolicy=fifo
+CPUSchedulingPriority=70
 
 ExecStart=/usr/bin/shairport-sync -c /etc/shairport-sync.conf
 
