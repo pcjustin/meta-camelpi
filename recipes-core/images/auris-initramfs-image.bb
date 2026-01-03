@@ -16,4 +16,5 @@ IMAGE_INSTALL:append = " \
     avahi-daemon \
     libconfig \
     scx \
+    roonbridge \
 "
