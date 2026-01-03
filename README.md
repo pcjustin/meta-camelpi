@@ -22,10 +22,12 @@ Auris is a dedicated music platform designed to deliver pristine high-resolution
   - SAMBA/CIFS network shares
   - USB storage devices
   - UPnP/DLNA media servers
+  - Roon Ready (RoonBridge endpoint)
 - **Bit-Perfect Audio**: Direct hardware access with no sample rate conversion
 - **Real-Time Audio Scheduling**: Dynamic CPU scheduling with FIFO priorities
   - mpd-auris (Backend): FIFO priority 80 (ALSA audio control - critical path)
   - upmpdcli (UPnP Renderer): FIFO priority 75 (primary playback - depends on mpd)
+  - RoonBridge (Roon Endpoint): FIFO priority 75 (Roon audio streaming)
   - Shairport Sync (AirPlay): FIFO priority 70 (independent ALSA access)
 - **Web-Based Control**: Intuitive web interface for music library management and playback control
 - **Optimized for Audio**: Minimal Linux image focused on audio performance
@@ -84,6 +86,7 @@ CPU Scheduler (scx_bpfland):
     FIFO Priority Hierarchy:
     80: mpd-auris ────────── Critical ALSA Control
     75: upmpdcli ─────────── Depends on mpd-auris
+    75: RoonBridge ──────── Roon audio streaming
     70: Shairport-sync ───── Independent ALSA
     Normal: Other Services
 
@@ -110,6 +113,7 @@ Both use the same USB DAC but independent paths to avoid conflicts.
 
 - **mpd-auris** (FIFO 80): Highest priority, controls critical ALSA interface
 - **upmpdcli** (FIFO 75): Secondary priority, depends on mpd-auris for audio output
+- **RoonBridge** (FIFO 75): Roon Labs network audio endpoint, same priority as upmpdcli
 - **Shairport-sync** (FIFO 70): Independent ALSA access, lower priority
 - **System Services**: Normal priority, dynamically scheduled by scx_bpfland
 
@@ -386,6 +390,7 @@ For issues and feature requests, please use the issue tracker.
 ## Roadmap
 
 - [x] RAM boot support (initramfs-based system)
+- [x] Roon Ready support (RoonBridge endpoint)
 - [ ] Spotify Connect integration
 - [ ] Tidal/Qobuz streaming support
 - [ ] Multi-room audio synchronization
