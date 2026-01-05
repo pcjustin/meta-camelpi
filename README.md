@@ -19,8 +19,6 @@ Auris is a dedicated music platform designed to deliver pristine high-resolution
 - **UPnP Renderer**: Act as UPnP/DLNA audio renderer to receive audio streams from UPnP control points
 - **Multiple Audio Sources**:
   - AirPlay (from iOS/macOS devices)
-  - SAMBA/CIFS network shares
-  - USB storage devices
   - UPnP/DLNA media servers
   - Roon Ready (RoonBridge endpoint)
 - **Bit-Perfect Audio**: Direct hardware access with no sample rate conversion
@@ -50,18 +48,18 @@ The layer provides `auris-image`, a custom Linux image based on `core-image-mini
 ### System Architecture Diagram
 
 ```
-┌────────────────────────────────────────────────────────────┐
-│                      Network Sources                       │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
-│  │ UPnP Server  │  │  AirPlay     │  │ SAMBA/USB    │     │
-│  │  (Primary)   │  │              │  │  (Local)     │     │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘     │
-└─────────┼──────────────────┼──────────────────┼────────────┘
-          │                  │                  │
-    ┌─────▼─────────────┐    │          ┌───────▼────┐
-    │ upmpdcli (UPnP)   │    │          │ File/USB   │
-    │ FIFO: 75          │    │          │ Browser    │
-    │ (Primary playback)│    │          └────────────┘
+┌──────────────────────────────────┐
+│     Network Audio Sources        │
+│  ┌──────────────┐  ┌──────────┐ │
+│  │ UPnP Server  │  │ AirPlay  │ │
+│  │  (Primary)   │  │          │ │
+│  └──────┬───────┘  └──────┬───┘ │
+└─────────┼──────────────────┼─────┘
+          │                  │
+    ┌─────▼─────────────┐    │
+    │ upmpdcli (UPnP)   │    │
+    │ FIFO: 75          │    │
+    │ (Primary playback)│    │
     └────────┬──────────┘    │
              │                │     ┌──────────────────┐
              │                │     │ Shairport-sync   │
@@ -204,33 +202,8 @@ URI: https://git.openembedded.org/meta-openembedded
 - 32GB+ microSD card (Class 10/UHS-1 or better)
 - High-quality USB DAC
 - Gigabit Ethernet connection
-- External USB storage for local library
 
 ## Usage
-
-### Accessing Web Interface
-
-After booting the Auris image:
-
-1. Connect to the device's IP address via web browser
-2. Default URL: `http://auris.local` or `http://<device-ip>`
-
-### Adding Music Sources
-
-#### SAMBA/CIFS Share
-1. Navigate to Settings → Sources
-2. Add network share with credentials
-3. Browse and index your music library
-
-#### USB Storage
-1. Insert USB drive with music files
-2. Device will auto-detect and mount
-3. Library appears in web interface
-
-#### UPnP/DLNA Server
-1. Ensure UPnP server is on same network
-2. Device auto-discovers UPnP sources
-3. Select server from available sources
 
 ### Using AirPlay
 
@@ -249,9 +222,7 @@ Stream audio directly from your iOS, macOS, or iTunes device:
 ### Connecting USB DAC
 
 1. Connect USB DAC to Raspberry Pi
-2. Device automatically detects and configures DAC
-3. Select DAC from audio output settings
-4. Start playback
+2. Device automatically detects and configures DAC as the primary audio output
 
 ## Supported Audio Formats
 
