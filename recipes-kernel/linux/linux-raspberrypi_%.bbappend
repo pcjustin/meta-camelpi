@@ -10,6 +10,7 @@ EXTRA_OEMAKE:append = " PAHOLE=${PAHOLE}"
 SRC_URI:append = " file://usb-audio.cfg \
                    file://initramfs.cfg \
                    file://bpf.cfg \
+                   file://scheduler.cfg \
 "
 
 # Symlink Image to Image-initramfs so bootimg-partition uses the bundled kernel
