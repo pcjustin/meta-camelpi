@@ -267,6 +267,10 @@ The system boots from initramfs (initial RAM filesystem) for optimized audio per
   - `dtoverlay=disable-bt-pi5` - Disable Bluetooth
   - `dtoverlay=disable-wifi-pi5` - Disable WiFi
   - Located in: `recipes-bsp/bootfiles/rpi-config_git.bbappend`
+- **CPU Performance Tuning** (boot-time configuration):
+  - `force_turbo=1` - Enable turbo boost for consistent CPU performance
+  - `arm_freq=1500` - Set CPU frequency to 1500MHz for stable audio processing
+  - Located in: `recipes-bsp/bootfiles/rpi-config_git.bbappend`
 - **Kernel Audio Support**:
   - `CONFIG_SND_USB_AUDIO=m` - USB Audio driver (compiled as module)
   - Located in: `recipes-kernel/linux/files/usb-audio.cfg`
@@ -319,9 +323,10 @@ This ordering prevents the circular dependency that would occur if both services
 - CPU scheduling: Dynamically managed by scx_bpfland based on FIFO priorities and system load
 - Priority inversion prevention: Critical path (mpd-auris) has highest priority
 
-#### CPU Governor
-- Set to "performance" to minimize frequency scaling latency
-- Applied via `cpu-performance.service`
+#### CPU Performance Optimization
+- **Turbo Boost**: Enabled at boot time for consistent CPU performance
+- **Fixed CPU Frequency**: Set to 1500MHz to minimize frequency scaling latency
+- Configuration applied via boot-time parameters in `rpi-config_git.bbappend`
 
 #### ALSA Configuration
 - Mixer disabled for direct hardware access

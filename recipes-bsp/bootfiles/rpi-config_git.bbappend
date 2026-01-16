@@ -15,4 +15,8 @@ do_deploy:append() {
 
     # Optimize USB power management
     echo "dtparam=usb_max_current_enable=1" >> ${DEPLOYDIR}/${BOOTFILES_DIR_NAME}/config.txt
+
+    # CPU performance tuning
+    echo "force_turbo=1" >> ${DEPLOYDIR}/${BOOTFILES_DIR_NAME}/config.txt
+    echo "arm_freq=1500" >> ${DEPLOYDIR}/${BOOTFILES_DIR_NAME}/config.txt
 }

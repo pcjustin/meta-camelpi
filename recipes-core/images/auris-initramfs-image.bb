@@ -7,7 +7,6 @@ IMAGE_INSTALL:append = " \
     alsa-lib \
     alsa-utils \
     alsa-config \
-    cpu-performance \
     irq-affinity \
     usb-tuning \
     mpd-auris \
