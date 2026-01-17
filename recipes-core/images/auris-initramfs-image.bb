@@ -9,6 +9,7 @@ IMAGE_INSTALL:append = " \
     alsa-config \
     irq-affinity \
     usb-tuning \
+    sysctl-tuning \
     mpd-auris \
     upmpdcli \
     shairport-sync \

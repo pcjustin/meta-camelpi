@@ -10,6 +10,10 @@ Group=root
 CPUSchedulingPolicy=fifo
 CPUSchedulingPriority=80
 
+# Memory locking to prevent audio interruption from swapping
+MemoryLocking=true
+LimitMEMLOCK=infinity
+
 ExecStartPre=/bin/mkdir -p /root/Music /root/.mpd/playlists /var/log
 ExecStart=/usr/bin/mpd --systemd /etc/mpd-auris.conf
 
