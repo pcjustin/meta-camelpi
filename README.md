@@ -332,10 +332,16 @@ This ordering prevents the circular dependency that would occur if both services
   - Configured via `CONFIG_HZ_1000=y` in `scheduler.cfg`
 - Configuration applied via boot-time parameters in `rpi-config_git.bbappend` and kernel configuration files
 
-#### ALSA Configuration
-- Mixer disabled for direct hardware access
-- Zero-copy audio buffer management
-- Located in: `recipes-multimedia/alsa/alsa-config/asound.conf`
+#### ALSA & Audio Buffer Configuration
+- **Direct Hardware Access**: Using ALSA `type hw` for bit-perfect audio without sample rate conversion
+- **Mixer Disabled**: No resampling or signal processing for transparent audio reproduction
+- **MPD Buffer Optimization**: `buffer_size "8192"` provides low-latency playback with excellent stability
+  - Tested across 44.1kHz - 192kHz sample rates
+  - Balances responsiveness with system load handling
+- **Zero-Copy Buffer Management**: Minimizes data copying overhead for real-time audio
+- Located in:
+  - ALSA config: `recipes-multimedia/alsa/alsa-config/asound.conf`
+  - MPD config: `recipes-multimedia/mpd/files/mpd-auris.conf`
 
 ### Adding Custom Recipes
 
