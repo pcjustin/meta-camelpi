@@ -326,7 +326,11 @@ This ordering prevents the circular dependency that would occur if both services
 #### CPU Performance Optimization
 - **Turbo Boost**: Enabled at boot time for consistent CPU performance
 - **Fixed CPU Frequency**: Set to 1500MHz to minimize frequency scaling latency
-- Configuration applied via boot-time parameters in `rpi-config_git.bbappend`
+- **Scheduler Tick Frequency**: 1000Hz kernel timer (4x more precise than default 250Hz)
+  - Provides improved scheduling precision for real-time audio processing
+  - Better handling of ultra-low buffer sizes in audio applications
+  - Configured via `CONFIG_HZ_1000=y` in `scheduler.cfg`
+- Configuration applied via boot-time parameters in `rpi-config_git.bbappend` and kernel configuration files
 
 #### ALSA Configuration
 - Mixer disabled for direct hardware access
