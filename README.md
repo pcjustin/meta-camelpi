@@ -21,8 +21,11 @@ Auris is a dedicated music platform designed to deliver pristine high-resolution
   - AirPlay (from iOS/macOS devices)
   - UPnP/DLNA media servers
   - Roon Ready (RoonBridge endpoint)
-- **Bit-Perfect Audio**: Direct hardware access with no sample rate conversion
+- **Bit-Perfect Audio**: Direct hardware access with no sample rate conversion, replaygain disabled
+  - Memory locking prevents audio interruption from memory swapping
+  - Optimized buffer management for low-latency playback
 - **Real-Time Audio Scheduling**: Dynamic CPU scheduling with FIFO priorities
+  - sysctl tuning reduces memory swapping and optimizes filesystem caching
   - mpd-auris (Backend): FIFO priority 80 (ALSA audio control - critical path)
   - upmpdcli (UPnP Renderer): FIFO priority 75 (primary playback - depends on mpd)
   - RoonBridge (Roon Endpoint): FIFO priority 75 (Roon audio streaming)
@@ -335,6 +338,7 @@ This ordering prevents the circular dependency that would occur if both services
 #### ALSA & Audio Buffer Configuration
 - **Direct Hardware Access**: Using ALSA `type hw` for bit-perfect audio without sample rate conversion
 - **Mixer Disabled**: No resampling or signal processing for transparent audio reproduction
+- **Bit-Perfect Playback**: `replaygain "off"` ensures strict bit-perfect audio playback without any gain processing
 - **MPD Buffer Optimization**: `buffer_size "8192"` provides low-latency playback with excellent stability
   - Tested across 44.1kHz - 192kHz sample rates
   - Balances responsiveness with system load handling
@@ -342,6 +346,18 @@ This ordering prevents the circular dependency that would occur if both services
 - Located in:
   - ALSA config: `recipes-multimedia/alsa/alsa-config/asound.conf`
   - MPD config: `recipes-multimedia/mpd/files/mpd-auris.conf`
+
+#### Memory Management
+- **Memory Locking**: `MemoryLocking=true` and `LimitMEMLOCK=infinity` in mpd-auris.service
+  - Prevents audio interruption from memory swapping
+  - Keeps critical audio data in physical RAM
+  - Configured in: `recipes-multimedia/mpd/files/mpd-auris.service`
+
+#### System Tuning Parameters (sysctl)
+- **Swap Reduction**: `vm.swappiness=10` reduces memory swapping to prevent audio latency
+- **Cache Optimization**: `vm.vfs_cache_pressure=50` optimizes filesystem caching for consistent performance
+- Configured via `sysctl-tuning` recipe
+- Located in: `recipes-core/sysctl-tuning/files/99-audio-tuning.conf`
 
 ### Adding Custom Recipes
 
