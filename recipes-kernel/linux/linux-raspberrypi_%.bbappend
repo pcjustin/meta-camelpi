@@ -11,6 +11,7 @@ SRC_URI:append = " file://usb-audio.cfg \
                    file://initramfs.cfg \
                    file://bpf.cfg \
                    file://scheduler.cfg \
+                   file://i2s-audio.cfg \
 "
 
 # Symlink Image to Image-initramfs so bootimg-partition uses the bundled kernel

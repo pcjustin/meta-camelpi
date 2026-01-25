@@ -197,13 +197,14 @@ URI: https://git.openembedded.org/meta-openembedded
 ### Minimum Requirements
 - Raspberry Pi 5
 - 16GB+ microSD card
-- USB DAC device
+- USB DAC device (primary) OR HiFiBerry Digi+ Pro (fallback)
 - Network connection (Ethernet or WiFi)
 
 ### Recommended Requirements
 - Raspberry Pi 5 (8GB RAM)
 - 32GB+ microSD card (Class 10/UHS-1 or better)
-- High-quality USB DAC
+- High-quality USB DAC (primary audio output)
+- Optional: HiFiBerry Digi+ Pro for S/PDIF fallback
 - Gigabit Ethernet connection
 
 ## Usage
@@ -257,6 +258,47 @@ The system boots from initramfs (initial RAM filesystem) for optimized audio per
 - Fast boot/shutdown cycles
 - Consistent audio performance without I/O interference
 
+### Supported Audio Devices
+
+#### Primary: USB DAC (Recommended)
+- Any USB Audio Class compliant DAC
+- Automatically detected as ALSA card 0 when connected
+- Supports up to 192kHz/24-bit audio (device dependent)
+- Recommended for best audio quality
+
+#### Fallback: HiFiBerry Digi+ Pro
+- S/PDIF digital audio output (RCA coaxial connector)
+- Requires GPIO connection to 40-pin header
+- Automatically used when USB DAC is not detected
+- Becomes ALSA card 0 when USB DAC is absent
+- Supports up to 192kHz/24-bit audio via S/PDIF
+
+**Device Priority**: USB DAC takes priority when both are connected due to kernel USB enumeration order.
+
+#### Audio Device Verification
+
+To check which audio device is currently active:
+
+```bash
+# View detection log at boot time
+cat /var/log/audio-detect.log
+
+# List all audio cards and PCM devices
+aplay -l
+
+# Test audio output (if speaker-test is installed)
+speaker-test -D default -c 2 -t wav
+```
+
+Named ALSA devices are available for explicit selection:
+```bash
+# Play through USB DAC explicitly
+aplay -D usb_dac /path/to/audio.wav
+
+# Play through HiFiBerry explicitly
+aplay -D hifiberry /path/to/audio.wav
+```
+
 ### USB DAC Audio Configuration
 
 #### Hardware Setup
@@ -265,18 +307,37 @@ The system boots from initramfs (initial RAM filesystem) for optimized audio per
 - Bluetooth and WiFi disabled to minimize interference
 
 #### Configuration
-- **Device Tree Overlays**:
+- **Device Tree Overlays and Parameters**:
   - `dtoverlay=vc4-kms-v3d,noaudio` - HDMI output with audio disabled
+  - `dtparam=audio=off` - Disable PWM audio (analog output)
   - `dtoverlay=disable-bt-pi5` - Disable Bluetooth
   - `dtoverlay=disable-wifi-pi5` - Disable WiFi
+  - `dtoverlay=hifiberry-digi-pro` - Enable HiFiBerry Digi+ Pro S/PDIF output (includes I2S configuration)
+  - `dtparam=spi=off` - Disable SPI interface (unused)
   - Located in: `recipes-bsp/bootfiles/rpi-config_git.bbappend`
+
+  **Note (Pi 5):** `dtparam=i2s=on` does not work on Raspberry Pi 5. The `hifiberry-digi-pro` overlay includes all necessary I2S configuration.
+
+  **Audio Output Configuration Rationale:**
+  - HDMI audio disabled via `noaudio` (HDMI video still available)
+  - PWM audio disabled via `audio=off` (analog output not used)
+  - I2C kept enabled (required for HiFiBerry WM8804 codec control via I2C bus)
+  - I2S enabled implicitly via `hifiberry-digi-pro` overlay (no separate I2S overlay needed on Pi 5)
+  - Only USB DAC (primary) and HiFiBerry Digi+ Pro (fallback) are active
 - **CPU Performance Tuning** (boot-time configuration):
   - `force_turbo=1` - Enable turbo boost for consistent CPU performance
   - `arm_freq=1500` - Set CPU frequency to 1500MHz for stable audio processing
   - Located in: `recipes-bsp/bootfiles/rpi-config_git.bbappend`
 - **Kernel Audio Support**:
-  - `CONFIG_SND_USB_AUDIO=m` - USB Audio driver (compiled as module)
-  - Located in: `recipes-kernel/linux/files/usb-audio.cfg`
+  - `CONFIG_SND_USB_AUDIO=y` - USB Audio driver (built-in for priority)
+    - Located in: `recipes-kernel/linux/files/usb-audio.cfg`
+  - **HiFiBerry Digi+ Pro Support** (fallback):
+    - `CONFIG_SND_BCM2835=m` - BCM2835 ALSA driver (module)
+    - `CONFIG_SND_SOC_HIFIBERRY_DIGI=m` - HiFiBerry Digi+ Pro driver (module)
+    - `CONFIG_SND_SOC_WM8804=m` - WM8804 codec driver (module)
+    - `CONFIG_SND_SOC_WM8804_I2C=m` - WM8804 I2C interface (module)
+    - Located in: `recipes-kernel/linux/files/i2s-audio.cfg`
+  - Modules loaded dynamically when HiFiBerry device tree overlay is active
 
 ### System Performance Tuning
 
@@ -286,25 +347,46 @@ The Auris platform implements several performance optimizations:
 The services are carefully configured to avoid circular dependencies:
 
 ```
-Boot → network-online → scx-bpfland → upmpdcli → mpd-auris
-                                    ↓
-                            shairport-sync
+Boot → sysinit → irq-affinity → sound.target → audio-detect
+             ↓
+         network-online → scx-bpfland → upmpdcli → mpd-auris
+                                              ↓
+                                      shairport-sync
 ```
 
 **Service Dependencies:**
+- **irq-affinity**: Starts after `sysinit.target`
+  - Configures IRQ affinity to protect CPU 3 from interrupts
+  - Binds all IRQs to CPUs 0-2
+  - Runs before all audio services
+  - Log file: `/var/log/irq-affinity.log`
+
+- **audio-detect**: Starts after `sound.target`, before audio services
+  - Detects available audio hardware (USB DAC or HiFiBerry Digi+ Pro)
+  - Logs detection results to `/var/log/audio-detect.log`
+  - Provides visibility into device priority at boot time
+  - Runs before `mpd-auris`, `upmpdcli`, and `shairport-sync`
+
 - **scx-bpfland**: Starts after `network-online.target` (not `multi-user.target`)
   - Provides dynamic CPU scheduling via BPF
   - Must start early to manage system load
+
 - **mpd-auris**: Started as a dependency of `upmpdcli`
   - FIFO priority 80 (critical audio control)
   - Configured with `WantedBy=upmpdcli.service`
-  - Depends on `scx-bpfland.service`
+  - Depends on `scx-bpfland.service` and `audio-detect.service`
+
 - **upmpdcli**: Starts with `multi-user.target`
   - Automatically pulls in `mpd-auris` via `Wants=mpd-auris.service`
   - FIFO priority 75 (primary playback)
   - Depends on `mpd-auris.service`
 
-This ordering prevents the circular dependency that would occur if both services were directly tied to `multi-user.target`.
+This ordering ensures:
+1. Early system initialization (irq-affinity protects CPU 3 first)
+2. Audio hardware detection before audio services start
+3. CPU scheduler runs before audio services to manage task distribution
+4. Audio services respect the critical path (mpd-auris highest priority)
+5. Avoids circular dependencies between services
 
 #### CPU Isolation & Scheduling
 - **sched_ext Scheduler (scx_bpfland)**:
@@ -317,7 +399,13 @@ This ordering prevents the circular dependency that would occur if both services
 - **Interrupt Affinity**: `irqaffinity=0-2`
   - Keeps interrupts on CPUs 0-2
   - Protects CPU 3 from interrupt latency
-  - Located in: `recipes-bsp/bootfiles/rpi-cmdline.bbappend`
+  - Monitored via `irq-affinity.service` which logs critical interrupts:
+    - USB audio (USB DAC)
+    - I2S audio (HiFiBerry Digi+ Pro)
+    - I2C control (WM8804 codec configuration)
+    - DMA, timer, and system interrupts
+  - Log file: `/var/log/irq-affinity.log`
+  - Located in: `recipes-bsp/bootfiles/rpi-cmdline.bbappend` and `recipes-core/systemd/irq-affinity/irq-affinity.sh`
 
 #### Real-Time Process Scheduling
 - **mpd-auris**: FIFO priority 80 - Music Player Daemon (critical ALSA control point)

@@ -34,7 +34,7 @@ for irq in /proc/irq/[0-9]*; do
     irq_aff=$(cat "$irq/smp_affinity" 2>/dev/null)
 
     case "$irq_desc" in
-        *usb*|*USB*|*dwc*|*xhci*|*timer*|*dma*)
+        *usb*|*USB*|*dwc*|*xhci*|*timer*|*dma*|*i2s*|*I2S*|*i2c*|*I2C*|*bcm2835*)
             echo "IRQ $irq_num ($irq_desc): affinity=$irq_aff" >> /var/log/irq-affinity.log
             ;;
     esac
