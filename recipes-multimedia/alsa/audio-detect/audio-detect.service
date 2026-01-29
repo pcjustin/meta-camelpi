@@ -1,7 +1,7 @@
 [Unit]
 Description=Audio Hardware Detection and Validation
 After=sound.target
-Before=mpd-auris.service upmpdcli.service shairport-sync.service
+Before=mpd-camel.service upmpdcli.service shairport-sync.service
 DefaultDependencies=no
 
 [Service]

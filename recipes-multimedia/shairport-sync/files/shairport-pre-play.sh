@@ -6,7 +6,7 @@
 logger -t shairport-sync "AirPlay connection detected, stopping MPD and upmpdcli"
 
 # Stop MPD and its UPnP frontend to release audio device
-systemctl stop mpd-auris.service 2>/dev/null
+systemctl stop mpd-camel.service 2>/dev/null
 systemctl stop upmpdcli.service 2>/dev/null
 
 exit 0

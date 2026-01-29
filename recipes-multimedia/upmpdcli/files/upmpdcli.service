@@ -1,7 +1,7 @@
 [Unit]
 Description=UPnP Renderer front-end to MPD (scx_bpfland scheduled)
-After=network-online.target mpd-auris.service scx-bpfland.service
-Wants=network-online.target mpd-auris.service
+After=network-online.target mpd-camel.service scx-bpfland.service
+Wants=network-online.target mpd-camel.service
 
 [Service]
 Type=simple

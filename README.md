@@ -1,12 +1,14 @@
-# meta-aurispi
+# meta-camelpi
 
-![Auris Logo](logo.png)
+![Camel Logo](logo.png)
 
-A Yocto/OpenEmbedded BSP layer for building Auris, a high-resolution audio streaming platform.
+A Yocto/OpenEmbedded BSP layer for building **Camel Audio**, a high-resolution audio streaming platform.
+
+> **Note**: This project was previously known as **Auris** and has been rebranded to **Camel Audio**.
 
 ## Overview
 
-Auris is a dedicated music platform designed to deliver pristine high-resolution audio playback through USB DAC (Digital-to-Analog Converter) devices. The platform provides a web-based interface for managing and streaming your music collection from multiple sources.
+**Camel Audio** is a dedicated music platform designed to deliver pristine high-resolution audio playback through USB DAC (Digital-to-Analog Converter) devices. The platform provides a web-based interface for managing and streaming your music collection from multiple sources.
 
 ## Features
 
@@ -26,7 +28,7 @@ Auris is a dedicated music platform designed to deliver pristine high-resolution
   - Optimized buffer management for low-latency playback
 - **Real-Time Audio Scheduling**: Dynamic CPU scheduling with FIFO priorities
   - sysctl tuning reduces memory swapping and optimizes filesystem caching
-  - mpd-auris (Backend): FIFO priority 80 (ALSA audio control - critical path)
+  - mpd-camel (Backend): FIFO priority 80 (ALSA audio control - critical path)
   - upmpdcli (UPnP Renderer): FIFO priority 75 (primary playback - depends on mpd)
   - RoonBridge (Roon Endpoint): FIFO priority 75 (Roon audio streaming)
   - Shairport Sync (AirPlay): FIFO priority 70 (independent ALSA access)
@@ -36,13 +38,13 @@ Auris is a dedicated music platform designed to deliver pristine high-resolution
 
 ## Image
 
-The layer provides `auris-image`, a custom Linux image based on `core-image-minimal` with audio streaming capabilities.
+The layer provides `camelpi-image`, a custom Linux image for **Camel Audio** based on `core-image-minimal` with high-resolution audio streaming capabilities.
 
 ### Image Architecture
 
 - **RAM Boot System**: Entire OS runs from RAM via initramfs (mounted on `/dev/ram0`)
 - **Single Boot Partition**: No separate rootfs partition, minimizes SD card usage
-- **Kernel with Embedded Initramfs**: Kernel built with embedded auris-initramfs-image
+- **Kernel with Embedded Initramfs**: Kernel built with embedded camelpi-initramfs-image
 - **WIC Image Format**: Pre-partitioned `.wic.bz2` format for easy SD card deployment
 - **Audio-Optimized**: Minimal rootfs focused on audio performance
 
@@ -70,7 +72,7 @@ The layer provides `auris-image`, a custom Linux image based on `core-image-mini
              │                      │ (AirPlay)        │
              │                      │ Direct ALSA      │
     ┌────────▼─────────────────┐    └────────┬─────────┘
-    │   mpd-auris (Backend)    │             │
+    │   mpd-camel (Backend)    │             │
     │   FIFO: 80 (Critical)    │             │
     │   ALSA Control & Output  │             │
     └────────┬─────────────────┘             │
@@ -85,8 +87,8 @@ CPU Scheduler (scx_bpfland):
     Overflow Domain: CPU 0-2 (System Services)
 
     FIFO Priority Hierarchy:
-    80: mpd-auris ────────── Critical ALSA Control
-    75: upmpdcli ─────────── Depends on mpd-auris
+    80: mpd-camel ────────── Critical ALSA Control
+    75: upmpdcli ─────────── Depends on mpd-camel
     75: RoonBridge ──────── Roon audio streaming
     70: Shairport-sync ───── Independent ALSA
     Normal: Other Services
@@ -94,13 +96,13 @@ CPU Scheduler (scx_bpfland):
 Interrupt Handling: CPU 0-2 (irqaffinity=0-2)
 ```
 
-For a detailed explanation of the architecture and design principles, see [meta-aurispi: HiFi Music Streaming Platform](https://pcjustin.com/2025/12/13/2025-12-13-meta-aurispi-hifi-music-streaming-platform/)
+For a detailed explanation of the architecture and design principles, see [meta-camelpi: HiFi Music Streaming Platform](https://pcjustin.com/2025/12/13/2025-12-13-meta-camelpi-hifi-music-streaming-platform/)
 
 ### Audio Signal Flow
 
 **UPnP Playback (Primary):**
 ```
-UPnP Server → upmpdcli (control) → mpd-auris (ALSA) → USB DAC
+UPnP Server → upmpdcli (control) → mpd-camel (ALSA) → USB DAC
 ```
 
 **AirPlay Playback (Independent):**
@@ -112,13 +114,13 @@ Both use the same USB DAC but independent paths to avoid conflicts.
 
 ### Real-Time Scheduling Strategy
 
-- **mpd-auris** (FIFO 80): Highest priority, controls critical ALSA interface
-- **upmpdcli** (FIFO 75): Secondary priority, depends on mpd-auris for audio output
+- **mpd-camel** (FIFO 80): Highest priority, controls critical ALSA interface
+- **upmpdcli** (FIFO 75): Secondary priority, depends on mpd-camel for audio output
 - **RoonBridge** (FIFO 75): Roon Labs network audio endpoint, same priority as upmpdcli
 - **Shairport-sync** (FIFO 70): Independent ALSA access, lower priority
 - **System Services**: Normal priority, dynamically scheduled by scx_bpfland
 
-Priority inversion is avoided because mpd-auris (critical path) has highest priority among audio applications.
+Priority inversion is avoided because mpd-camel (critical path) has highest priority among audio applications.
 
 ## Dependencies
 
@@ -155,16 +157,16 @@ URI: https://git.openembedded.org/meta-openembedded
    git clone https://git.yoctoproject.org/meta-yocto
    git clone https://git.yoctoproject.org/meta-raspberrypi
    git clone https://git.openembedded.org/meta-openembedded
-   git clone <meta-aurispi-repository>
+   git clone <meta-camelpi-repository>
    ```
 
 2. Initialize build environment:
    ```bash
-   source openembedded-core/oe-init-build-env auris-build
+   source openembedded-core/oe-init-build-env camel-build
    ```
 
 3. Add layers to `conf/bblayers.conf`:
-   - meta-aurispi
+   - meta-camelpi
    - meta-openembedded/meta-oe
    - meta-openembedded/meta-python
    - meta-openembedded/meta-multimedia
@@ -182,12 +184,12 @@ URI: https://git.openembedded.org/meta-openembedded
 
 5. Build the image:
    ```bash
-   bitbake auris-image
+   bitbake camelpi-image
    ```
 
 6. Use bmaptool to copy the generated `.wic.bz2` file to the SD card:
    ```bash
-   bmaptool copy tmp/deploy/images/raspberrypi5/auris-image-raspberrypi5.wic.bz2 /dev/sdX
+   bmaptool copy tmp/deploy/images/raspberrypi5/camelpi-image-raspberrypi5.wic.bz2 /dev/sdX
    ```
 
 7. Boot your RPI
@@ -213,12 +215,12 @@ URI: https://git.openembedded.org/meta-openembedded
 
 Stream audio directly from your iOS, macOS, or iTunes device:
 
-1. Ensure the device is on the same network as the Auris system
+1. Ensure the device is on the same network as the Camel Audio system
 2. On your Apple device, open the AirPlay menu:
    - **iOS/iPadOS**: Control Center → Music playback card → AirPlay icon
    - **macOS**: Click the volume icon in the menu bar → AirPlay
    - **iTunes**: Click the AirPlay icon in the lower right
-3. Select "Auris Audio" from the available AirPlay devices
+3. Select "Camel Audio" from the available AirPlay devices
 4. Start playing audio - it will stream directly to the USB DAC
 
 **Note**: When AirPlay is active, MPD and UPnP services are automatically paused. They will resume when you disconnect from AirPlay.
@@ -244,13 +246,13 @@ Stream audio directly from your iOS, macOS, or iTunes device:
 The system boots from initramfs (initial RAM filesystem) for optimized audio performance:
 
 #### Configuration
-- **Initramfs Image**: `auris-initramfs-image` - custom minimal rootfs with audio packages
+- **Initramfs Image**: `camelpi-initramfs-image` - custom minimal rootfs with audio packages
 - **Kernel Bundling**: Initramfs is embedded directly in kernel via `INITRAMFS_IMAGE_BUNDLE = "1"`
 - **Root Filesystem**: Mounted as `/dev/ram0` at boot time
 - **Kernel Parameters**: `root=/dev/ram0` in cmdline.txt
 - **Configuration Files**:
   - `conf/layer.conf` - Initramfs image and bundling settings
-  - `wic/sdimage-auris-initramfs.wks` - Single partition WIC template
+  - `wic/sdimage-camelpi-initramfs.wks` - Single partition WIC template
   - `recipes-kernel/linux/linux-raspberrypi_%.bbappend` - Kernel config files
 
 #### Benefits
@@ -341,7 +343,7 @@ aplay -D hifiberry /path/to/audio.wav
 
 ### System Performance Tuning
 
-The Auris platform implements several performance optimizations:
+The Camel Audio platform implements several performance optimizations:
 
 #### System Startup Order
 The services are carefully configured to avoid circular dependencies:
@@ -349,7 +351,7 @@ The services are carefully configured to avoid circular dependencies:
 ```
 Boot → sysinit → irq-affinity → sound.target → audio-detect
              ↓
-         network-online → scx-bpfland → upmpdcli → mpd-auris
+         network-online → scx-bpfland → upmpdcli → mpd-camel
                                               ↓
                                       shairport-sync
 ```
@@ -365,34 +367,34 @@ Boot → sysinit → irq-affinity → sound.target → audio-detect
   - Detects available audio hardware (USB DAC or HiFiBerry Digi+ Pro)
   - Logs detection results to `/var/log/audio-detect.log`
   - Provides visibility into device priority at boot time
-  - Runs before `mpd-auris`, `upmpdcli`, and `shairport-sync`
+  - Runs before `mpd-camel`, `upmpdcli`, and `shairport-sync`
 
 - **scx-bpfland**: Starts after `network-online.target` (not `multi-user.target`)
   - Provides dynamic CPU scheduling via BPF
   - Must start early to manage system load
 
-- **mpd-auris**: Started as a dependency of `upmpdcli`
+- **mpd-camel**: Started as a dependency of `upmpdcli`
   - FIFO priority 80 (critical audio control)
   - Configured with `WantedBy=upmpdcli.service`
   - Depends on `scx-bpfland.service` and `audio-detect.service`
 
 - **upmpdcli**: Starts with `multi-user.target`
-  - Automatically pulls in `mpd-auris` via `Wants=mpd-auris.service`
+  - Automatically pulls in `mpd-camel` via `Wants=mpd-camel.service`
   - FIFO priority 75 (primary playback)
-  - Depends on `mpd-auris.service`
+  - Depends on `mpd-camel.service`
 
 This ordering ensures:
 1. Early system initialization (irq-affinity protects CPU 3 first)
 2. Audio hardware detection before audio services start
 3. CPU scheduler runs before audio services to manage task distribution
-4. Audio services respect the critical path (mpd-auris highest priority)
+4. Audio services respect the critical path (mpd-camel highest priority)
 5. Avoids circular dependencies between services
 
 #### CPU Isolation & Scheduling
 - **sched_ext Scheduler (scx_bpfland)**:
   - Dynamic BPF-based scheduler for intelligent task distribution
   - Primary domain: CPU 3 (--primary-domain 0x8)
-  - CPU 3 prioritized for audio applications (mpd-auris, upmpdcli, shairport-sync)
+  - CPU 3 prioritized for audio applications (mpd-camel, upmpdcli, shairport-sync)
   - System services dynamically scheduled by scx_bpfland
   - Automatically balances load: high-priority audio tasks on CPU 3, others overflow to CPUs 0-2
   - Located in: `recipes-kernel/scx/files/scx-bpfland.service`
@@ -408,11 +410,11 @@ This ordering ensures:
   - Located in: `recipes-bsp/bootfiles/rpi-cmdline.bbappend` and `recipes-core/systemd/irq-affinity/irq-affinity.sh`
 
 #### Real-Time Process Scheduling
-- **mpd-auris**: FIFO priority 80 - Music Player Daemon (critical ALSA control point)
+- **mpd-camel**: FIFO priority 80 - Music Player Daemon (critical ALSA control point)
 - **upmpdcli**: FIFO priority 75 - UPnP/DLNA renderer (primary playback method, depends on mpd)
 - **Shairport Sync**: FIFO priority 70 - AirPlay audio receiver (independent ALSA access)
 - CPU scheduling: Dynamically managed by scx_bpfland based on FIFO priorities and system load
-- Priority inversion prevention: Critical path (mpd-auris) has highest priority
+- Priority inversion prevention: Critical path (mpd-camel) has highest priority
 
 #### CPU Performance Optimization
 - **Turbo Boost**: Enabled at boot time for consistent CPU performance
@@ -433,13 +435,13 @@ This ordering ensures:
 - **Zero-Copy Buffer Management**: Minimizes data copying overhead for real-time audio
 - Located in:
   - ALSA config: `recipes-multimedia/alsa/alsa-config/asound.conf`
-  - MPD config: `recipes-multimedia/mpd/files/mpd-auris.conf`
+  - MPD config: `recipes-multimedia/mpd/files/mpd-camel.conf`
 
 #### Memory Management
-- **Memory Locking**: `MemoryLocking=true` and `LimitMEMLOCK=infinity` in mpd-auris.service
+- **Memory Locking**: `MemoryLocking=true` and `LimitMEMLOCK=infinity` in mpd-camel.service
   - Prevents audio interruption from memory swapping
   - Keeps critical audio data in physical RAM
-  - Configured in: `recipes-multimedia/mpd/files/mpd-auris.service`
+  - Configured in: `recipes-multimedia/mpd/files/mpd-camel.service`
 
 #### System Tuning Parameters (sysctl)
 - **Swap Reduction**: `vm.swappiness=10` reduces memory swapping to prevent audio latency
@@ -451,8 +453,8 @@ This ordering ensures:
 
 Place custom recipes in appropriate subdirectories:
 ```
-meta-aurispi/
-├── recipes-auris/
+meta-camelpi/
+├── recipes-camelpi/
 │   ├── audio-player/
 │   ├── web-interface/
 │   └── source-handlers/

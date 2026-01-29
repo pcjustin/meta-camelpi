@@ -6,7 +6,7 @@
 logger -t shairport-sync "AirPlay disconnected, restoring MPD and upmpdcli"
 
 # Restore MPD and its UPnP frontend
-systemctl start mpd-auris.service 2>/dev/null
+systemctl start mpd-camel.service 2>/dev/null
 systemctl start upmpdcli.service 2>/dev/null
 
 exit 0

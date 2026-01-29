@@ -1,5 +1,5 @@
 [Unit]
-Description=Music Player Daemon (Auris - scx_bpfland scheduled)
+Description=Music Player Daemon (Camel Audio - scx_bpfland scheduled)
 After=network.target sound.target scx-bpfland.service
 
 [Service]
@@ -15,7 +15,7 @@ MemoryLocking=true
 LimitMEMLOCK=infinity
 
 ExecStartPre=/bin/mkdir -p /root/Music /root/.mpd/playlists /var/log
-ExecStart=/usr/bin/mpd --systemd /etc/mpd-auris.conf
+ExecStart=/usr/bin/mpd --systemd /etc/mpd-camel.conf
 
 Restart=on-failure
 RestartSec=5

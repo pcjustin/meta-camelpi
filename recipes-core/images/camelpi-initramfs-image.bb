@@ -1,6 +1,6 @@
 require recipes-core/images/core-image-minimal.bb
 
-SUMMARY = "Auris audio initramfs image - the actual rootfs for RAM boot"
+SUMMARY = "Camel Audio initramfs image - the actual rootfs for RAM boot"
 
 # Increase initramfs size limit to accommodate all kernel modules
 # Pi 5 has 8GB RAM, so 1GB initramfs is acceptable (1/8 of total RAM)
@@ -15,7 +15,7 @@ IMAGE_INSTALL:append = " \
     irq-affinity \
     usb-tuning \
     sysctl-tuning \
-    mpd-auris \
+    mpd-camel \
     upmpdcli \
     shairport-sync \
     avahi-daemon \

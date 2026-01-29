@@ -1,4 +1,4 @@
-SUMMARY = "Audio hardware detection for Auris"
+SUMMARY = "Audio hardware detection for Camel Audio"
 DESCRIPTION = "Detects USB DAC or HiFiBerry and logs audio hardware configuration"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
