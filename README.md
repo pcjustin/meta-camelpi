@@ -19,10 +19,12 @@ A Yocto/OpenEmbedded BSP layer for building **Camel Audio**, a high-resolution a
   - Optimized for audio-focused workloads
 - **AirPlay Support**: Stream audio from iOS, macOS, and iTunes via Shairport Sync with automatic switching
 - **UPnP Renderer**: Act as UPnP/DLNA audio renderer to receive audio streams from UPnP control points
+- **NetworkAudio (NAA) Support**: HQPlayer endpoint for high-quality network audio streaming
 - **Multiple Audio Sources**:
   - AirPlay (from iOS/macOS devices)
   - UPnP/DLNA media servers
   - Roon Ready (RoonBridge endpoint)
+  - NetworkAudio (NAA) endpoint for HQPlayer
 - **Bit-Perfect Audio**: Direct hardware access with no sample rate conversion, replaygain disabled
   - Memory locking prevents audio interruption from memory swapping
   - Optimized buffer management for low-latency playback
@@ -90,6 +92,7 @@ CPU Scheduler (scx_bpfland):
     80: mpd-camel ────────── Critical ALSA Control
     75: upmpdcli ─────────── Depends on mpd-camel
     75: RoonBridge ──────── Roon audio streaming
+    75: NetworkAudio (NAA) ─ HQPlayer network endpoint
     70: Shairport-sync ───── Independent ALSA
     Normal: Other Services
 
@@ -105,18 +108,29 @@ For a detailed explanation of the architecture and design principles, see [meta-
 UPnP Server → upmpdcli (control) → mpd-camel (ALSA) → USB DAC
 ```
 
+**Roon Playback:**
+```
+Roon Core → RoonBridge (FIFO 75) → mpd-camel (ALSA) → USB DAC
+```
+
+**NetworkAudio/HQPlayer Playback:**
+```
+HQPlayer → networkaudiod (NAA) (FIFO 75) → USB DAC
+```
+
 **AirPlay Playback (Independent):**
 ```
 AirPlay Source → Shairport-sync (direct) → USB DAC
 ```
 
-Both use the same USB DAC but independent paths to avoid conflicts.
+Multiple sources share the same USB DAC with independent signal paths to avoid conflicts. Priority scheduling ensures mpd-camel maintains control of the critical ALSA interface.
 
 ### Real-Time Scheduling Strategy
 
 - **mpd-camel** (FIFO 80): Highest priority, controls critical ALSA interface
 - **upmpdcli** (FIFO 75): Secondary priority, depends on mpd-camel for audio output
 - **RoonBridge** (FIFO 75): Roon Labs network audio endpoint, same priority as upmpdcli
+- **NetworkAudio/NAA** (FIFO 75): HQPlayer network endpoint, same priority as upmpdcli and RoonBridge
 - **Shairport-sync** (FIFO 70): Independent ALSA access, lower priority
 - **System Services**: Normal priority, dynamically scheduled by scx_bpfland
 
@@ -382,6 +396,11 @@ Boot → sysinit → irq-affinity → sound.target → audio-detect
   - Automatically pulls in `mpd-camel` via `Wants=mpd-camel.service`
   - FIFO priority 75 (primary playback)
   - Depends on `mpd-camel.service`
+
+- **networkaudiod**: Starts with `multi-user.target`
+  - FIFO priority 75 (NetworkAudio/HQPlayer endpoint)
+  - Provides network audio endpoint for HQPlayer streaming
+  - Depends on `network-online.target`
 
 This ordering ensures:
 1. Early system initialization (irq-affinity protects CPU 3 first)
