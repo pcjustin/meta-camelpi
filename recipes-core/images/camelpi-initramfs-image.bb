@@ -23,4 +23,5 @@ IMAGE_INSTALL:append = " \
     scx \
     roonbridge \
     kernel-modules \
+    networkaudiod \
 "

@@ -1,0 +1,26 @@
+[Unit]
+Description=NetworkAudio Daemon - Network Audio Endpoint
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+
+# Real-time priority for audio processing
+CPUSchedulingPolicy=fifo
+CPUSchedulingPriority=75
+
+# Ensure audio processing isolation to CPU core 3
+CPUAffinity=3
+
+ExecStart=/usr/sbin/networkaudiod
+Restart=on-failure
+RestartSec=5
+
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
