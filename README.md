@@ -136,6 +136,34 @@ Multiple sources share the same USB DAC with independent signal paths to avoid c
 
 Priority inversion is avoided because mpd-camel (critical path) has highest priority among audio applications.
 
+## Prerequisites
+
+### Recommended Build Environment
+
+**Ubuntu 24.04 LTS** is the recommended operating system for building this layer. Other Linux distributions may work but are not officially tested.
+
+### Required Dependencies
+
+Before building this layer, ensure your build host has the following dependencies installed:
+
+```bash
+# Ubuntu/Debian
+sudo apt-get install bzip2 chrpath diffstat g++ gawk gcc make libc-bin
+
+# Fedora/RHEL
+sudo dnf install bzip2 chrpath diffstat gcc gcc-c++ gawk make rpcgen util-linux
+```
+
+**Required packages:**
+- `bzip2` - Compression utility and algorithm support (includes bunzip2)
+- `chrpath` - Change rpath/runpath for binaries
+- `diffstat` - Generates histogram of changes in source files
+- `g++` - C++ compiler (for building native tools)
+- `gawk` - GNU awk text processing
+- `gcc` - C compiler (essential for kernel and recipe compilation)
+- `make` - Build automation tool
+- `libc-bin` - C library utilities (includes rpcgen on Ubuntu/Debian)
+
 ## Dependencies
 
 This layer depends on:
@@ -165,48 +193,117 @@ URI: https://git.openembedded.org/meta-openembedded
 
 ## Quick Start
 
-1. Clone required layers:
-   ```bash
-   git clone https://git.openembedded.org/openembedded-core
-   git clone https://git.yoctoproject.org/meta-yocto
-   git clone https://git.yoctoproject.org/meta-raspberrypi
-   git clone https://git.openembedded.org/meta-openembedded
-   git clone <meta-camelpi-repository>
-   ```
+### 1. Create Sources Directory and Clone Repositories
 
-2. Initialize build environment:
-   ```bash
-   source openembedded-core/oe-init-build-env camel-build
-   ```
+First, create a `sources` directory for all Yocto/OpenEmbedded repositories:
 
-3. Add layers to `conf/bblayers.conf`:
-   - meta-camelpi
-   - meta-openembedded/meta-oe
-   - meta-openembedded/meta-python
-   - meta-openembedded/meta-multimedia
+```bash
+# Create sources directory
+mkdir -p ~/camelpi/sources
+cd ~/camelpi/sources
+```
 
-4. Configure `conf/local.conf`:
-   ```
-   MACHINE = "raspberrypi5"
-   LICENSE_FLAGS_ACCEPTED = "synaptics-killswitch"
-   ```
+Then clone all necessary repositories in the following order:
 
-   Optional: Enable SSH login for remote access and debugging:
-   ```
-   EXTRA_IMAGE_FEATURES:append = " ssh-server-dropbear allow-empty-password empty-root-password allow-root-login"
-   ```
+```bash
+# Clone Yocto/OpenEmbedded core components
+git clone https://git.openembedded.org/bitbake
+git clone https://git.openembedded.org/openembedded-core
 
-5. Build the image:
-   ```bash
-   bitbake camelpi-image
-   ```
+# Clone Yocto project metadata layers
+git clone https://git.yoctoproject.org/meta-yocto
+git clone https://git.yoctoproject.org/meta-raspberrypi
 
-6. Use bmaptool to copy the generated `.wic.bz2` file to the SD card:
-   ```bash
-   bmaptool copy tmp/deploy/images/raspberrypi5/camelpi-image-raspberrypi5.wic.bz2 /dev/sdX
-   ```
+# Clone additional metadata layer
+git clone https://git.openembedded.org/meta-openembedded
 
-7. Boot your RPI
+# Clone this Camel Audio BSP layer
+git clone <meta-camelpi-repository>
+
+# IMPORTANT: Switch to master branch for these layers
+cd openembedded-core && git checkout master && cd ..
+cd meta-yocto && git checkout master && cd ..
+cd meta-openembedded && git checkout master && cd ..
+cd meta-camelpi && git checkout master && cd ..
+```
+
+**Required repositories:**
+- `bitbake` - Build engine for Yocto/OpenEmbedded
+- `openembedded-core` - Core metadata and base recipes
+- `meta-yocto` - Yocto-specific metadata layer
+- `meta-raspberrypi` - Raspberry Pi hardware support layer
+- `meta-openembedded` - Additional recipes for multimedia, Python, and system tools
+- `meta-camelpi` - Camel Audio BSP layer (this repository)
+
+### 2. Initialize Build Environment
+
+```bash
+source openembedded-core/oe-init-build-env camel-build
+```
+
+### 3. Add Layers to Build Configuration
+
+Use `bitbake-layers` command to add all required layers:
+
+```bash
+bitbake-layers add-layer ../sources/meta-raspberrypi/
+bitbake-layers add-layer ../sources/meta-openembedded/meta-oe
+bitbake-layers add-layer ../sources/meta-openembedded/meta-python
+bitbake-layers add-layer ../sources/meta-openembedded/meta-multimedia
+bitbake-layers add-layer ../sources/meta-camelpi/
+```
+
+**Layers being added:**
+- `meta-raspberrypi` - Raspberry Pi hardware support
+- `meta-openembedded/meta-oe` - OpenEmbedded core recipes
+- `meta-openembedded/meta-python` - Python support recipes
+- `meta-openembedded/meta-multimedia` - Multimedia recipes
+- `meta-camelpi` - Camel Audio BSP layer
+
+### 4. Configure Build Settings
+
+Add the required settings to `conf/local.conf` using `echo`:
+
+```bash
+echo 'MACHINE = "raspberrypi5"' >> conf/local.conf
+echo 'LICENSE_FLAGS_ACCEPTED = "synaptics-killswitch"' >> conf/local.conf
+```
+
+Or add them all at once:
+
+```bash
+cat >> conf/local.conf << 'EOF'
+
+MACHINE = "raspberrypi5"
+LICENSE_FLAGS_ACCEPTED = "synaptics-killswitch"
+EOF
+```
+
+**Optional**: Enable SSH login for remote access and debugging:
+
+```bash
+echo 'EXTRA_IMAGE_FEATURES:append = " ssh-server-dropbear allow-empty-password empty-root-password allow-root-login"' >> conf/local.conf
+```
+
+### 5. Build the Image
+
+```bash
+bitbake camelpi-image
+```
+
+### 6. Deploy to SD Card
+
+Use `bmaptool` to copy the generated `.wic.bz2` file to your SD card:
+
+```bash
+bmaptool copy tmp/deploy/images/raspberrypi5/camelpi-image-raspberrypi5.wic.bz2 /dev/sdX
+```
+
+Replace `/dev/sdX` with your actual SD card device (e.g., `/dev/sdb`).
+
+### 7. Boot Your Raspberry Pi
+
+Insert the SD card into your Raspberry Pi 5 and power it on.
 
 ## Hardware Requirements
 
